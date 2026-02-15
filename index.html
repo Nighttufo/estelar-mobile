@@ -3,84 +3,108 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Stellar Mobile - Precision Mode</title>
+    <title>Stellar Pro - Ultimate Mobile</title>
     <style>
         :root {
             --space-black: #050508;
             --star-cyan: #00f2ff;
-            --glass: rgba(12, 12, 20, 0.95);
+            --glass: rgba(12, 12, 20, 0.98);
             --accent: #00f2ff;
+            --grid-opacity: 0.1;
         }
 
-        body { margin: 0; overflow: hidden; background: #000; font-family: 'Segoe UI', sans-serif; touch-action: none; }
+        body.mode-black { --space-black: #000; --accent: #666; --star-cyan: #fff; }
+        body.mode-grid { --space-black: #050510; --accent: #ff9f43; --star-cyan: #ff9f43; }
 
-        /* Mira Central */
+        body { margin: 0; overflow: hidden; background: #000; font-family: 'Segoe UI', sans-serif; display: flex; color: #e0e0e0; touch-action: none; }
+
+        /* Mira de Precisão */
         #crosshair {
-            position: fixed; top: 50%; left: 50%;
-            width: 20px; height: 20px;
-            border: 1px solid var(--star-cyan);
-            transform: translate(-50%, -50%);
-            pointer-events: none; z-index: 50;
-            border-radius: 50%;
+            position: fixed; top: 50%; left: 50%; width: 20px; height: 20px;
+            border: 1px solid var(--star-cyan); transform: translate(-50%, -50%);
+            pointer-events: none; z-index: 50; border-radius: 50%; opacity: 0.5;
         }
-        #crosshair::after, #crosshair::before {
-            content: ''; position: absolute; background: var(--star-cyan);
-        }
-        #crosshair::after { top: 50%; left: -10px; width: 40px; height: 1px; }
-        #crosshair::before { left: 50%; top: -10px; width: 1px; height: 40px; }
+        #crosshair::after { content: ''; position: absolute; top: 50%; left: -10px; width: 40px; height: 1px; background: var(--star-cyan); }
+        #crosshair::before { content: ''; position: absolute; left: 50%; top: -10px; width: 1px; height: 40px; background: var(--star-cyan); }
 
-        /* Botão de Marcar Ponto */
+        /* Botão Principal */
         #btn-mark {
-            position: fixed; bottom: 30px; left: 50%;
-            transform: translateX(-50%);
-            width: 70%; height: 55px;
-            background: var(--star-cyan); color: #000;
-            border: none; border-radius: 30px;
-            font-weight: bold; font-size: 1.1em;
-            z-index: 100; box-shadow: 0 0 20px rgba(0, 242, 255, 0.4);
+            position: fixed; bottom: 20px; right: 20px; width: 70px; height: 70px;
+            background: var(--star-cyan); color: #000; border: none; border-radius: 50%;
+            font-weight: bold; z-index: 100; box-shadow: 0 0 20px rgba(0, 242, 255, 0.4);
+            display: flex; align-items: center; justify-content: center; font-size: 24px;
         }
 
+        /* Sidebar e Menus */
         #sidebar { 
-            position: fixed; left: 0; top: 0; width: 85%; height: 100vh; 
+            position: fixed; left: 0; top: 0; width: 280px; height: 100vh; 
             background: var(--glass); padding: 20px; box-sizing: border-box; 
+            display: flex; flex-direction: column; border-right: 1px solid rgba(255, 255, 255, 0.1); 
             z-index: 1000; transform: translateX(-100%); transition: 0.3s;
         }
         #sidebar.active { transform: translateX(0); }
 
         #menu-toggle {
-            position: fixed; top: 20px; right: 20px; width: 50px; height: 50px;
-            background: rgba(255,255,255,0.1); color: #fff; border-radius: 10px;
+            position: fixed; top: 20px; left: 20px; width: 50px; height: 50px;
+            background: rgba(10, 10, 20, 0.8); color: var(--star-cyan); border-radius: 10px;
             display: flex; align-items: center; justify-content: center;
-            z-index: 999; border: 1px solid rgba(255,255,255,0.2);
+            z-index: 999; border: 1px solid var(--star-cyan); font-size: 20px;
         }
 
-        #custom-modal { position: fixed; top: 20%; left: 50%; transform: translateX(-50%); background: #111; padding: 25px; border: 1px solid var(--star-cyan); z-index: 2000; display: none; width: 80%; border-radius: 12px; }
+        .map-item { background: rgba(255, 255, 255, 0.05); padding: 12px; border-radius: 6px; margin-top: 8px; display: flex; justify-content: space-between; align-items: center; }
+        .active-map { border: 1px solid var(--star-cyan); background: rgba(0, 242, 255, 0.1); }
+
+        button.menu-btn { cursor: pointer; padding: 10px; border: 1px solid var(--accent); border-radius: 4px; background: transparent; color: var(--accent); font-weight: bold; width: 100%; margin-bottom: 8px; font-size: 12px; }
+
+        /* Modal */
+        #custom-modal { position: fixed; top: 20%; left: 50%; transform: translateX(-50%); background: #111; padding: 25px; border: 1px solid var(--star-cyan); z-index: 2000; display: none; width: 85%; max-width: 320px; border-radius: 12px; }
         #custom-modal.active { display: block; }
-        input { width: 100%; padding: 15px; margin-bottom: 15px; background: #000; border: 1px solid #333; color: #fff; box-sizing: border-box; }
-        
-        .map-item { background: rgba(255,255,255,0.05); padding: 15px; border-radius: 8px; margin-top: 10px; display: flex; justify-content: space-between; }
-        canvas { display: block; width: 100vw; height: 100vh; }
+        input { width: 100%; padding: 12px; margin-bottom: 15px; background: #000; border: 1px solid #333; color: #fff; box-sizing: border-box; }
+
+        #overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 998; display: none; }
+        canvas { display: block; background: var(--space-black); }
     </style>
 </head>
-<body>
+<body class="mode-stellar">
 
 <div id="crosshair"></div>
-<button id="btn-mark" onclick="markCenterPoint()">MARCAR PONTO AQUI</button>
+<button id="btn-mark" onclick="markCenterPoint()">+</button>
 <button id="menu-toggle" onclick="toggleSidebar()">☰</button>
+<div id="overlay" onclick="closeAll()"></div>
 
 <div id="sidebar">
-    <h2 style="color:var(--star-cyan);">STELLAR PRO</h2>
-    <div id="map-list" style="overflow-y:auto; flex-grow:1"></div>
-    <button onclick="openModal('map')">+ NOVO SETOR</button>
-    <button onclick="clearAllData()" style="color:#ff4757; border-color:#ff4757">RESETAR TUDO</button>
+    <h2 style="color:var(--star-cyan); font-size: 1.2em;">STELLAR PRO</h2>
+    
+    <div id="map-list" style="overflow-y:auto; flex-grow:1; margin-bottom: 15px;"></div>
+
+    <button class="menu-btn" onclick="openModal('map')">+ NOVO SETOR</button>
+    <hr style="width:100%; opacity:0.1">
+    
+    <p style="font-size: 10px; color: #666; margin: 5px 0;">TEMAS</p>
+    <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap: 5px;">
+        <button class="menu-btn" onclick="setTheme('stellar')">NEON</button>
+        <button class="menu-btn" onclick="setTheme('black')">BK</button>
+        <button class="menu-btn" onclick="setTheme('grid')">GRID</button>
+    </div>
+
+    <div id="grid-ctrl" style="margin: 10px 0;">
+        <label style="font-size: 10px; color: #666;">GRADE: <input type="range" min="0" max="100" value="10" oninput="updateGridOpacity(this.value)" style="width:70%; vertical-align:middle"></label>
+    </div>
+
+    <button class="menu-btn" onclick="exportData()" style="border-color:#4cd137; color:#4cd137">EXPORTAR JSON</button>
+    <button class="menu-btn" onclick="document.getElementById('fileInput').click()" style="border-color:#0097e6; color:#0097e6">IMPORTAR</button>
+    <input type="file" id="fileInput" style="display:none" onchange="importData(event)">
+    
+    <button class="menu-btn" onclick="clearAllData()" style="color:#ff4757; border-color:#ff4757">RESET TOTAL</button>
+    <button class="menu-btn" onclick="closeAll()" style="border:none; color:#555">FECHAR</button>
 </div>
 
 <div id="custom-modal">
-    <h3 id="modal-title" style="color:var(--star-cyan)">NOMEAR</h3>
-    <input type="text" id="modal-input" placeholder="ID do ponto...">
+    <h3 id="modal-title" style="color:var(--star-cyan); font-size: 1em;">ENTRADA DE DADOS</h3>
+    <input type="text" id="modal-input" placeholder="Digite o nome...">
     <div style="display:flex; gap:10px;">
-        <button onclick="confirmModal()" style="background:var(--star-cyan); color:#000; padding:10px; border:none; flex:1">SALVAR</button>
-        <button onclick="closeModal()" style="color:#fff; border:none; flex:1">CANCELAR</button>
+        <button class="menu-btn" onclick="confirmModal()" style="background:var(--star-cyan); color:#000; border:none">SALVAR</button>
+        <button class="menu-btn" onclick="closeModal()" style="border:none">CANCELAR</button>
     </div>
 </div>
 
@@ -91,18 +115,22 @@ const canvas = document.getElementById('canvas');
 const ctx = canvas.getContext('2d');
 const sidebar = document.getElementById('sidebar');
 const modal = document.getElementById('custom-modal');
+const overlay = document.getElementById('overlay');
 const modalInput = document.getElementById('modal-input');
 
-let maps = JSON.parse(localStorage.getItem('stellar_prec_v1')) || {}; 
-let currentMapName = localStorage.getItem('last_prec_map') || null;
+const DB_KEY = 'stellar_unified_v1';
+
+let maps = JSON.parse(localStorage.getItem(DB_KEY)) || {}; 
+let currentMapName = localStorage.getItem('last_map_unified') || null;
 let points = (currentMapName && maps[currentMapName]) ? [...maps[currentMapName]] : [];
+let currentTheme = 'stellar';
+let gridOpacity = 0.1;
 let camera = { x: 0, y: 0, zoom: 1 };
 let isDragging = false;
 let lastTouchPos = { x: 0, y: 0 };
 let currentModalType = null;
 let pendingPointData = null;
 
-// CORREÇÃO DE DPI
 function setupCanvas() {
     const dpr = window.devicePixelRatio || 1;
     canvas.width = window.innerWidth * dpr;
@@ -119,28 +147,53 @@ function init() {
     draw();
 }
 
+// Funções de Estilo e Opções do PC
+function setTheme(theme) {
+    document.body.className = 'mode-' + theme;
+    currentTheme = theme;
+}
+
+function updateGridOpacity(val) { gridOpacity = val / 100; }
+
+function exportData() {
+    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(maps));
+    const dl = document.createElement('a');
+    dl.setAttribute("href", dataStr);
+    dl.setAttribute("download", "stellar_backup.json");
+    dl.click();
+}
+
+function importData(e) {
+    const reader = new FileReader();
+    reader.onload = (event) => {
+        maps = JSON.parse(event.target.result);
+        saveToLocal();
+        location.reload();
+    };
+    reader.readAsText(e.target.files[0]);
+}
+
+// Lógica de Mapa
 function markCenterPoint() {
-    if(!currentMapName) { alert("Crie um setor no menu primeiro!"); return; }
-    // O ponto é o centro da tela (0,0 em relação à câmera)
-    const x = -camera.x;
-    const y = -camera.y;
-    pendingPointData = {x, y};
+    if(!currentMapName) return alert("Crie um setor!");
+    pendingPointData = { x: -camera.x, y: -camera.y };
     openModal('point');
 }
 
-function toggleSidebar() { sidebar.classList.toggle('active'); }
-function openModal(type) { currentModalType = type; modal.classList.add('active'); modalInput.focus(); }
-function closeModal() { modal.classList.remove('active'); modalInput.value = ""; }
+function toggleSidebar() { sidebar.classList.toggle('active'); overlay.style.display = sidebar.classList.contains('active') ? 'block' : 'none'; }
+function closeAll() { sidebar.classList.remove('active'); modal.classList.remove('active'); overlay.style.display = 'none'; }
+
+function openModal(type) { currentModalType = type; modal.classList.add('active'); overlay.style.display = 'block'; modalInput.focus(); }
+function closeModal() { modal.classList.remove('active'); if(!sidebar.classList.contains('active')) overlay.style.display = 'none'; }
 
 function confirmModal() {
     const val = modalInput.value.trim();
     if (currentModalType === 'map' && val) { maps[val] = []; switchMap(val); }
-    else if (currentModalType === 'point' && pendingPointData) { 
-        points.push({ ...pendingPointData, label: val || `P-${points.length + 1}` }); 
+    else if (currentModalType === 'point' && pendingPointData) {
+        points.push({ ...pendingPointData, label: val || `P-${points.length + 1}` });
         saveCurrentMap();
     }
-    closeModal();
-    sidebar.classList.remove('active');
+    closeAll();
 }
 
 function renderMapList() {
@@ -148,37 +201,51 @@ function renderMapList() {
     list.innerHTML = '';
     Object.keys(maps).forEach(name => {
         const div = document.createElement('div');
-        div.className = 'map-item';
+        div.className = `map-item ${name === currentMapName ? 'active-map' : ''}`;
         div.innerHTML = `<span>${name.toUpperCase()}</span> <span onclick="deleteMap('${name}', event)">✖</span>`;
-        div.onclick = () => { switchMap(name); toggleSidebar(); };
+        div.onclick = () => { switchMap(name); closeAll(); };
         list.appendChild(div);
     });
 }
 
-function switchMap(name) { currentMapName = name; points = [...maps[name]]; localStorage.setItem('last_prec_map', name); renderMapList(); }
-function saveCurrentMap() { if(currentMapName) { maps[currentMapName] = points; localStorage.setItem('stellar_prec_v1', JSON.stringify(maps)); } }
-function clearAllData() { if(confirm("Apagar tudo?")) { localStorage.clear(); location.reload(); } }
-function deleteMap(name, e) { e.stopPropagation(); delete maps[name]; saveCurrentMap(); renderMapList(); }
+function switchMap(name) { currentMapName = name; points = [...maps[name]]; localStorage.setItem('last_map_unified', name); renderMapList(); }
+function saveCurrentMap() { if(currentMapName) { maps[currentMapName] = points; saveToLocal(); } }
+function saveToLocal() { localStorage.setItem(DB_KEY, JSON.stringify(maps)); }
+function clearAllData() { if(confirm("RESETAR TUDO?")) { localStorage.clear(); location.reload(); } }
+function deleteMap(name, e) { e.stopPropagation(); delete maps[name]; saveToLocal(); renderMapList(); }
 
 function draw() {
-    ctx.fillStyle = "#050508";
+    ctx.fillStyle = getComputedStyle(document.body).getPropertyValue('--space-black');
     ctx.fillRect(0, 0, window.innerWidth, window.innerHeight);
     
+    // Grade do PC
+    if(currentTheme === 'grid') {
+        ctx.strokeStyle = `rgba(255, 159, 67, ${gridOpacity})`;
+        let step = 60 * camera.zoom;
+        for(let x = (camera.x * camera.zoom) % step; x < window.innerWidth; x += step) {
+            ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, window.innerHeight); ctx.stroke();
+        }
+        for(let y = (camera.y * camera.zoom) % step; y < window.innerHeight; y += step) {
+            ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(window.innerWidth, y); ctx.stroke();
+        }
+    }
+
     ctx.save();
     ctx.translate(window.innerWidth/2 + camera.x * camera.zoom, window.innerHeight/2 + camera.y * camera.zoom);
     ctx.scale(camera.zoom, camera.zoom);
 
-    // Linhas de conexão
     if (points.length > 1) {
-        ctx.beginPath(); ctx.strokeStyle = "rgba(0, 242, 255, 0.3)"; ctx.lineWidth = 2;
-        ctx.moveTo(points[0].x, points[0].y);
+        ctx.beginPath(); 
+        ctx.strokeStyle = currentTheme === 'black' ? "#222" : (currentTheme === 'grid' ? "rgba(255,159,67,0.3)" : "rgba(0,242,255,0.3)");
+        ctx.lineWidth = 2; ctx.moveTo(points[0].x, points[0].y);
         points.forEach(p => ctx.lineTo(p.x, p.y)); ctx.stroke();
     }
 
-    // Pontos
     points.forEach(p => {
-        ctx.fillStyle = "#fff"; ctx.beginPath(); ctx.arc(p.x, p.y, 5, 0, Math.PI*2); ctx.fill();
-        ctx.font = "bold 12px Arial"; ctx.fillStyle = "#00f2ff"; ctx.textAlign = "center";
+        ctx.fillStyle = currentTheme === 'black' ? "#fff" : (currentTheme === 'grid' ? "#ff9f43" : "#fff");
+        ctx.beginPath(); ctx.arc(p.x, p.y, 5, 0, Math.PI*2); ctx.fill();
+        ctx.font = "bold 12px Arial"; ctx.textAlign = "center";
+        ctx.fillStyle = currentTheme === 'black' ? "#444" : (currentTheme === 'grid' ? "#ff9f43" : "#00f2ff");
         ctx.fillText(p.label.toUpperCase(), p.x, p.y - 15);
     });
 
@@ -186,20 +253,15 @@ function draw() {
     requestAnimationFrame(draw);
 }
 
-// TOUCH NAVIGATION (APENAS MOVER)
-canvas.addEventListener('touchstart', e => {
-    isDragging = true;
-    lastTouchPos = { x: e.touches[0].clientX, y: e.touches[0].clientY };
-});
-
+// TOUCH NAV
+canvas.addEventListener('touchstart', e => { isDragging = true; lastTouchPos = { x: e.touches[0].clientX, y: e.touches[0].clientY }; });
 canvas.addEventListener('touchmove', e => {
     if (!isDragging) return;
-    const touch = e.touches[0];
-    camera.x += (touch.clientX - lastTouchPos.x) / camera.zoom;
-    camera.y += (touch.clientY - lastTouchPos.y) / camera.zoom;
-    lastTouchPos = { x: touch.clientX, y: touch.clientY };
+    const t = e.touches[0];
+    camera.x += (t.clientX - lastTouchPos.x) / camera.zoom;
+    camera.y += (t.clientY - lastTouchPos.y) / camera.zoom;
+    lastTouchPos = { x: t.clientX, y: t.clientY };
 });
-
 canvas.addEventListener('touchend', () => isDragging = false);
 
 init();
