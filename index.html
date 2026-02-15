@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Stellar Pro - Ultimate Mobile</title>
+    <title>Stellar Pro - Precision Navigation</title>
     <style>
         :root {
             --space-black: #050508;
@@ -22,17 +22,23 @@
         #crosshair {
             position: fixed; top: 50%; left: 50%; width: 20px; height: 20px;
             border: 1px solid var(--star-cyan); transform: translate(-50%, -50%);
-            pointer-events: none; z-index: 50; border-radius: 50%; opacity: 0.5;
+            pointer-events: none; z-index: 50; border-radius: 50%; opacity: 0.4;
         }
         #crosshair::after { content: ''; position: absolute; top: 50%; left: -10px; width: 40px; height: 1px; background: var(--star-cyan); }
         #crosshair::before { content: ''; position: absolute; left: 50%; top: -10px; width: 1px; height: 40px; background: var(--star-cyan); }
 
-        /* Botão Principal */
+        /* HUD - Zoom Info */
+        #zoom-info {
+            position: fixed; top: 20px; right: 80px; font-size: 10px; color: var(--star-cyan);
+            background: rgba(0,0,0,0.5); padding: 5px 10px; border-radius: 15px; pointer-events: none;
+        }
+
+        /* Botão Principal de Ponto */
         #btn-mark {
             position: fixed; bottom: 20px; right: 20px; width: 70px; height: 70px;
             background: var(--star-cyan); color: #000; border: none; border-radius: 50%;
             font-weight: bold; z-index: 100; box-shadow: 0 0 20px rgba(0, 242, 255, 0.4);
-            display: flex; align-items: center; justify-content: center; font-size: 24px;
+            display: flex; align-items: center; justify-content: center; font-size: 30px;
         }
 
         /* Sidebar e Menus */
@@ -40,7 +46,7 @@
             position: fixed; left: 0; top: 0; width: 280px; height: 100vh; 
             background: var(--glass); padding: 20px; box-sizing: border-box; 
             display: flex; flex-direction: column; border-right: 1px solid rgba(255, 255, 255, 0.1); 
-            z-index: 1000; transform: translateX(-100%); transition: 0.3s;
+            z-index: 1000; transform: translateX(-100%); transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
         #sidebar.active { transform: translateX(0); }
 
@@ -51,15 +57,16 @@
             z-index: 999; border: 1px solid var(--star-cyan); font-size: 20px;
         }
 
-        .map-item { background: rgba(255, 255, 255, 0.05); padding: 12px; border-radius: 6px; margin-top: 8px; display: flex; justify-content: space-between; align-items: center; }
+        .map-item { background: rgba(255, 255, 255, 0.05); padding: 12px; border-radius: 6px; margin-top: 8px; display: flex; justify-content: space-between; align-items: center; font-size: 13px; }
         .active-map { border: 1px solid var(--star-cyan); background: rgba(0, 242, 255, 0.1); }
 
-        button.menu-btn { cursor: pointer; padding: 10px; border: 1px solid var(--accent); border-radius: 4px; background: transparent; color: var(--accent); font-weight: bold; width: 100%; margin-bottom: 8px; font-size: 12px; }
+        button.menu-btn { cursor: pointer; padding: 12px; border: 1px solid var(--accent); border-radius: 6px; background: transparent; color: var(--accent); font-weight: bold; width: 100%; margin-bottom: 8px; font-size: 12px; transition: 0.2s; }
+        button.menu-btn:active { background: var(--accent); color: #000; }
 
         /* Modal */
-        #custom-modal { position: fixed; top: 20%; left: 50%; transform: translateX(-50%); background: #111; padding: 25px; border: 1px solid var(--star-cyan); z-index: 2000; display: none; width: 85%; max-width: 320px; border-radius: 12px; }
+        #custom-modal { position: fixed; top: 20%; left: 50%; transform: translateX(-50%); background: #111; padding: 25px; border: 1px solid var(--star-cyan); z-index: 2000; display: none; width: 85%; max-width: 320px; border-radius: 12px; box-shadow: 0 0 50px #000; }
         #custom-modal.active { display: block; }
-        input { width: 100%; padding: 12px; margin-bottom: 15px; background: #000; border: 1px solid #333; color: #fff; box-sizing: border-box; }
+        input { width: 100%; padding: 15px; margin-bottom: 15px; background: #000; border: 1px solid #333; color: #fff; box-sizing: border-box; border-radius: 6px; }
 
         #overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 998; display: none; }
         canvas { display: block; background: var(--space-black); }
@@ -68,43 +75,49 @@
 <body class="mode-stellar">
 
 <div id="crosshair"></div>
+<div id="zoom-info">ZOOM: 1.0x</div>
 <button id="btn-mark" onclick="markCenterPoint()">+</button>
 <button id="menu-toggle" onclick="toggleSidebar()">☰</button>
 <div id="overlay" onclick="closeAll()"></div>
 
 <div id="sidebar">
-    <h2 style="color:var(--star-cyan); font-size: 1.2em;">STELLAR PRO</h2>
+    <h2 style="color:var(--star-cyan); font-size: 1.2em; letter-spacing: 2px;">STELLAR PRO</h2>
     
     <div id="map-list" style="overflow-y:auto; flex-grow:1; margin-bottom: 15px;"></div>
 
     <button class="menu-btn" onclick="openModal('map')">+ NOVO SETOR</button>
-    <hr style="width:100%; opacity:0.1">
+    <button class="menu-btn" onclick="resetCamera()" style="border-color: #fff; color: #fff;">CENTRALIZAR CÂMERA</button>
     
-    <p style="font-size: 10px; color: #666; margin: 5px 0;">TEMAS</p>
-    <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap: 5px;">
+    <hr style="width:100%; opacity:0.1; margin: 15px 0;">
+    
+    <p style="font-size: 10px; color: #666; margin-bottom: 8px;">CONFIGURAÇÕES DE TEMA</p>
+    <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px;">
         <button class="menu-btn" onclick="setTheme('stellar')">NEON</button>
         <button class="menu-btn" onclick="setTheme('black')">BK</button>
         <button class="menu-btn" onclick="setTheme('grid')">GRID</button>
     </div>
 
     <div id="grid-ctrl" style="margin: 10px 0;">
-        <label style="font-size: 10px; color: #666;">GRADE: <input type="range" min="0" max="100" value="10" oninput="updateGridOpacity(this.value)" style="width:70%; vertical-align:middle"></label>
+        <label style="font-size: 10px; color: #666;">OPACIDADE GRADE: <br>
+        <input type="range" min="0" max="100" value="10" oninput="updateGridOpacity(this.value)" style="width:100%; margin-top:10px;"></label>
     </div>
 
-    <button class="menu-btn" onclick="exportData()" style="border-color:#4cd137; color:#4cd137">EXPORTAR JSON</button>
-    <button class="menu-btn" onclick="document.getElementById('fileInput').click()" style="border-color:#0097e6; color:#0097e6">IMPORTAR</button>
+    <div style="display: flex; gap: 10px;">
+        <button class="menu-btn" onclick="exportData()" style="border-color:#4cd137; color:#4cd137; flex: 1;">EXPORTAR</button>
+        <button class="menu-btn" onclick="document.getElementById('fileInput').click()" style="border-color:#0097e6; color:#0097e6; flex: 1;">IMPORTAR</button>
+    </div>
     <input type="file" id="fileInput" style="display:none" onchange="importData(event)">
     
-    <button class="menu-btn" onclick="clearAllData()" style="color:#ff4757; border-color:#ff4757">RESET TOTAL</button>
-    <button class="menu-btn" onclick="closeAll()" style="border:none; color:#555">FECHAR</button>
+    <button class="menu-btn" onclick="clearAllData()" style="color:#ff4757; border-color:#ff4757; margin-top: 10px;">RESETAR TUDO</button>
+    <button class="menu-btn" onclick="closeAll()" style="border:none; color:#555; margin-top: 10px;">FECHAR MENU</button>
 </div>
 
 <div id="custom-modal">
-    <h3 id="modal-title" style="color:var(--star-cyan); font-size: 1em;">ENTRADA DE DADOS</h3>
-    <input type="text" id="modal-input" placeholder="Digite o nome...">
+    <h3 id="modal-title" style="color:var(--star-cyan); font-size: 1.1em; margin-top:0;">NOMEAR ELEMENTO</h3>
+    <input type="text" id="modal-input" placeholder="Ex: Estrela Alpha, Setor 7...">
     <div style="display:flex; gap:10px;">
-        <button class="menu-btn" onclick="confirmModal()" style="background:var(--star-cyan); color:#000; border:none">SALVAR</button>
-        <button class="menu-btn" onclick="closeModal()" style="border:none">CANCELAR</button>
+        <button class="menu-btn" onclick="confirmModal()" style="background:var(--star-cyan); color:#000; border:none; flex: 1; height: 45px;">SALVAR</button>
+        <button class="menu-btn" onclick="closeModal()" style="border:none; flex: 1;">CANCELAR</button>
     </div>
 </div>
 
@@ -117,19 +130,22 @@ const sidebar = document.getElementById('sidebar');
 const modal = document.getElementById('custom-modal');
 const overlay = document.getElementById('overlay');
 const modalInput = document.getElementById('modal-input');
+const zoomDisplay = document.getElementById('zoom-info');
 
-const DB_KEY = 'stellar_unified_v1';
+const DB_KEY = 'stellar_mobile_final_v2';
 
 let maps = JSON.parse(localStorage.getItem(DB_KEY)) || {}; 
-let currentMapName = localStorage.getItem('last_map_unified') || null;
+let currentMapName = localStorage.getItem('last_map_active') || null;
 let points = (currentMapName && maps[currentMapName]) ? [...maps[currentMapName]] : [];
 let currentTheme = 'stellar';
 let gridOpacity = 0.1;
 let camera = { x: 0, y: 0, zoom: 1 };
+
+// Variáveis para Touch
 let isDragging = false;
 let lastTouchPos = { x: 0, y: 0 };
-let currentModalType = null;
-let pendingPointData = null;
+let initialPinchDist = null;
+let initialZoom = 1;
 
 function setupCanvas() {
     const dpr = window.devicePixelRatio || 1;
@@ -147,12 +163,18 @@ function init() {
     draw();
 }
 
-// Funções de Estilo e Opções do PC
-function setTheme(theme) {
-    document.body.className = 'mode-' + theme;
-    currentTheme = theme;
+function resetCamera() {
+    camera = { x: 0, y: 0, zoom: 1 };
+    updateZoomHUD();
+    closeAll();
 }
 
+function updateZoomHUD() {
+    zoomDisplay.innerText = `ZOOM: ${camera.zoom.toFixed(1)}x`;
+}
+
+// Funções de Gestão de Dados
+function setTheme(theme) { document.body.className = 'mode-' + theme; currentTheme = theme; }
 function updateGridOpacity(val) { gridOpacity = val / 100; }
 
 function exportData() {
@@ -167,33 +189,50 @@ function importData(e) {
     const reader = new FileReader();
     reader.onload = (event) => {
         maps = JSON.parse(event.target.result);
-        saveToLocal();
+        localStorage.setItem(DB_KEY, JSON.stringify(maps));
         location.reload();
     };
     reader.readAsText(e.target.files[0]);
 }
 
-// Lógica de Mapa
+// Lógica de Marcação
 function markCenterPoint() {
-    if(!currentMapName) return alert("Crie um setor!");
+    if(!currentMapName) return alert("Crie um setor primeiro!");
     pendingPointData = { x: -camera.x, y: -camera.y };
     openModal('point');
 }
 
-function toggleSidebar() { sidebar.classList.toggle('active'); overlay.style.display = sidebar.classList.contains('active') ? 'block' : 'none'; }
-function closeAll() { sidebar.classList.remove('active'); modal.classList.remove('active'); overlay.style.display = 'none'; }
+function toggleSidebar() { 
+    sidebar.classList.toggle('active'); 
+    overlay.style.display = sidebar.classList.contains('active') ? 'block' : 'none'; 
+}
 
-function openModal(type) { currentModalType = type; modal.classList.add('active'); overlay.style.display = 'block'; modalInput.focus(); }
+function closeAll() { 
+    sidebar.classList.remove('active'); 
+    modal.classList.remove('active'); 
+    overlay.style.display = 'none'; 
+}
+
+function openModal(type) { 
+    currentModalType = type; 
+    modal.classList.add('active'); 
+    overlay.style.display = 'block'; 
+    setTimeout(() => modalInput.focus(), 100);
+}
+
 function closeModal() { modal.classList.remove('active'); if(!sidebar.classList.contains('active')) overlay.style.display = 'none'; }
 
 function confirmModal() {
     const val = modalInput.value.trim();
-    if (currentModalType === 'map' && val) { maps[val] = []; switchMap(val); }
-    else if (currentModalType === 'point' && pendingPointData) {
-        points.push({ ...pendingPointData, label: val || `P-${points.length + 1}` });
+    if (currentModalType === 'map' && val) { 
+        maps[val] = []; 
+        switchMap(val); 
+    } else if (currentModalType === 'point' && pendingPointData) {
+        points.push({ ...pendingPointData, label: val || `PONTO ${points.length + 1}` });
         saveCurrentMap();
     }
     closeAll();
+    modalInput.value = "";
 }
 
 function renderMapList() {
@@ -202,23 +241,28 @@ function renderMapList() {
     Object.keys(maps).forEach(name => {
         const div = document.createElement('div');
         div.className = `map-item ${name === currentMapName ? 'active-map' : ''}`;
-        div.innerHTML = `<span>${name.toUpperCase()}</span> <span onclick="deleteMap('${name}', event)">✖</span>`;
+        div.innerHTML = `<span>${name.toUpperCase()}</span> <span onclick="deleteMap('${name}', event)" style="padding:5px; color:#ff4757">✖</span>`;
         div.onclick = () => { switchMap(name); closeAll(); };
         list.appendChild(div);
     });
 }
 
-function switchMap(name) { currentMapName = name; points = [...maps[name]]; localStorage.setItem('last_map_unified', name); renderMapList(); }
-function saveCurrentMap() { if(currentMapName) { maps[currentMapName] = points; saveToLocal(); } }
-function saveToLocal() { localStorage.setItem(DB_KEY, JSON.stringify(maps)); }
-function clearAllData() { if(confirm("RESETAR TUDO?")) { localStorage.clear(); location.reload(); } }
-function deleteMap(name, e) { e.stopPropagation(); delete maps[name]; saveToLocal(); renderMapList(); }
+function switchMap(name) { 
+    currentMapName = name; 
+    points = [...maps[name]]; 
+    localStorage.setItem('last_map_active', name); 
+    renderMapList(); 
+}
+
+function saveCurrentMap() { if(currentMapName) { maps[currentMapName] = points; localStorage.setItem(DB_KEY, JSON.stringify(maps)); } }
+function clearAllData() { if(confirm("DESEJA APAGAR TUDO DEFINITIVAMENTE?")) { localStorage.clear(); location.reload(); } }
+function deleteMap(name, e) { e.stopPropagation(); if(confirm(`Excluir setor ${name}?`)) { delete maps[name]; localStorage.setItem(DB_KEY, JSON.stringify(maps)); renderMapList(); } }
 
 function draw() {
     ctx.fillStyle = getComputedStyle(document.body).getPropertyValue('--space-black');
     ctx.fillRect(0, 0, window.innerWidth, window.innerHeight);
     
-    // Grade do PC
+    // Grade de Fundo
     if(currentTheme === 'grid') {
         ctx.strokeStyle = `rgba(255, 159, 67, ${gridOpacity})`;
         let step = 60 * camera.zoom;
@@ -226,7 +270,7 @@ function draw() {
             ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, window.innerHeight); ctx.stroke();
         }
         for(let y = (camera.y * camera.zoom) % step; y < window.innerHeight; y += step) {
-            ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(window.innerWidth, y); ctx.stroke();
+            ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(canvas.width, y); ctx.stroke();
         }
     }
 
@@ -234,18 +278,20 @@ function draw() {
     ctx.translate(window.innerWidth/2 + camera.x * camera.zoom, window.innerHeight/2 + camera.y * camera.zoom);
     ctx.scale(camera.zoom, camera.zoom);
 
+    // Desenha conexões entre estrelas
     if (points.length > 1) {
         ctx.beginPath(); 
-        ctx.strokeStyle = currentTheme === 'black' ? "#222" : (currentTheme === 'grid' ? "rgba(255,159,67,0.3)" : "rgba(0,242,255,0.3)");
-        ctx.lineWidth = 2; ctx.moveTo(points[0].x, points[0].y);
+        ctx.strokeStyle = currentTheme === 'black' ? "#333" : (currentTheme === 'grid' ? "rgba(255,159,67,0.2)" : "rgba(0,242,255,0.3)");
+        ctx.lineWidth = 1.5; ctx.moveTo(points[0].x, points[0].y);
         points.forEach(p => ctx.lineTo(p.x, p.y)); ctx.stroke();
     }
 
+    // Desenha os pontos
     points.forEach(p => {
         ctx.fillStyle = currentTheme === 'black' ? "#fff" : (currentTheme === 'grid' ? "#ff9f43" : "#fff");
-        ctx.beginPath(); ctx.arc(p.x, p.y, 5, 0, Math.PI*2); ctx.fill();
-        ctx.font = "bold 12px Arial"; ctx.textAlign = "center";
-        ctx.fillStyle = currentTheme === 'black' ? "#444" : (currentTheme === 'grid' ? "#ff9f43" : "#00f2ff");
+        ctx.beginPath(); ctx.arc(p.x, p.y, 4, 0, Math.PI*2); ctx.fill();
+        ctx.font = "bold 11px Arial"; ctx.textAlign = "center";
+        ctx.fillStyle = currentTheme === 'black' ? "#666" : (currentTheme === 'grid' ? "#ff9f43" : "#00f2ff");
         ctx.fillText(p.label.toUpperCase(), p.x, p.y - 15);
     });
 
@@ -253,16 +299,39 @@ function draw() {
     requestAnimationFrame(draw);
 }
 
-// TOUCH NAV
-canvas.addEventListener('touchstart', e => { isDragging = true; lastTouchPos = { x: e.touches[0].clientX, y: e.touches[0].clientY }; });
-canvas.addEventListener('touchmove', e => {
-    if (!isDragging) return;
-    const t = e.touches[0];
-    camera.x += (t.clientX - lastTouchPos.x) / camera.zoom;
-    camera.y += (t.clientY - lastTouchPos.y) / camera.zoom;
-    lastTouchPos = { x: t.clientX, y: t.clientY };
+// TOUCH NAVIGATION & PINCH ZOOM
+canvas.addEventListener('touchstart', e => {
+    if (e.touches.length === 1) {
+        isDragging = true;
+        lastTouchPos = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+    } else if (e.touches.length === 2) {
+        isDragging = false;
+        initialPinchDist = Math.hypot(
+            e.touches[0].clientX - e.touches[1].clientX,
+            e.touches[0].clientY - e.touches[1].clientY
+        );
+        initialZoom = camera.zoom;
+    }
 });
-canvas.addEventListener('touchend', () => isDragging = false);
+
+canvas.addEventListener('touchmove', e => {
+    if (e.touches.length === 1 && isDragging) {
+        const t = e.touches[0];
+        camera.x += (t.clientX - lastTouchPos.x) / camera.zoom;
+        camera.y += (t.clientY - lastTouchPos.y) / camera.zoom;
+        lastTouchPos = { x: t.clientX, y: t.clientY };
+    } else if (e.touches.length === 2) {
+        const currentDist = Math.hypot(
+            e.touches[0].clientX - e.touches[1].clientX,
+            e.touches[0].clientY - e.touches[1].clientY
+        );
+        const factor = currentDist / initialPinchDist;
+        camera.zoom = Math.min(Math.max(initialZoom * factor, 0.2), 5); // Limita zoom entre 0.2x e 5x
+        updateZoomHUD();
+    }
+});
+
+canvas.addEventListener('touchend', () => { isDragging = false; initialPinchDist = null; });
 
 init();
 </script>
